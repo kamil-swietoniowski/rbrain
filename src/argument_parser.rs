@@ -15,7 +15,7 @@ pub enum Commands {
 }
 
 #[derive(Parser)]
-#[command(name = "rbrain", version, about = "Local encrypted CLI notes in Rust", long_about = None,
+#[command(name = "rbrain", version = "0.1", about = "Local encrypted CLI notes in Rust", long_about = None,
     group(
         ArgGroup::new("case")
                 .required(false) 

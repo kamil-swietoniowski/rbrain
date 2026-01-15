@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use chrono::{DateTime, offset::Utc};
+use chrono::{DateTime, Local, offset::Utc};
 use rusqlite::{Connection, Result, OptionalExtension};
 
 const SCHEMA: &str = include_str!("../schema.sql");
@@ -63,13 +63,14 @@ impl Database {
         self.conn.query_row(
             "SELECT id, title, content, modified_at, created_at FROM record WHERE id = ?1", [id], |row| {
                 Ok(Record{
-                    id: {
-                        let i: String = row.get(0)?;
-                        i.parse::<i32>().unwrap()
-
-                    },
+                    id: row.get(0)?,
                     title: row.get(1)?,
-                    content: row.get(2)?,
+                    content: {
+                        let content: Option<String> = row
+                            .get::<_, Option<Vec<u8>>>(2)?
+                            .and_then(|bytes| String::from_utf8(bytes).ok());
+                        content
+                    },
                     modified_at: {
                         let s: String = row.get(3)?;
                         Some(s.parse::<DateTime<Utc>>().unwrap())
@@ -199,11 +200,22 @@ pub struct Record {
 impl Record {
     pub fn new(title: Option<String>, content: Option<String>) -> Self {
         let now = Utc::now();
-        Self { id: -1, title, content , modified_at: Some(now), created_at: Some(now), tags: HashMap::new() } // time to implement
+        Self { id: -1, title, content , modified_at: Some(now), created_at: Some(now), tags: HashMap::new() }     
     }
 
     pub fn empty() -> Self {
         Self { id: -1, title: None, content: None, modified_at: None, created_at: None, tags: HashMap::new() }
+    }
+
+    pub fn display(&self) {
+        println!("ID: {}", self.id);
+        println!("Tags: {}", self.tags.keys()
+            .map(|s| s.as_str())
+            .collect::<Vec<_>>()
+            .join(", "));
+        println!("Title:\n{}", self.title.clone().unwrap());
+        println!("\nContent:\n{}", self.content.clone().unwrap());
+        println!("\n\nUpdated At: {}\nCreated At: {}", data_to_readable(self.modified_at.unwrap()), data_to_readable(self.created_at.unwrap()));
     }
 }
 
@@ -226,6 +238,10 @@ impl fmt::Display for Record {
             .map(|s| s.as_str())
             .collect::<Vec<_>>()
             .join(", ");
-        write!(f, "ID: {}; TITLE: {}; UPDATED AT: {}; CREATED AT: {}; TAG: {}", self.id, self.title.clone().unwrap(), self.modified_at.unwrap(), self.created_at.unwrap(), tags)
+        write!(f, "ID: {}; TITLE: {}; UPDATED AT: {}; CREATED AT: {}; TAG: {}", self.id, self.title.clone().unwrap(), data_to_readable(self.modified_at.unwrap()), data_to_readable(self.created_at.unwrap()), tags)
     }
+}
+
+fn data_to_readable(data: DateTime<Utc>) -> String {
+    data.with_timezone(&Local).format("%H:%M %Y-%m-%d").to_string()
 }
