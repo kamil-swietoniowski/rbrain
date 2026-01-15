@@ -24,7 +24,7 @@ pub enum Commands {
 )]
 pub struct Args {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
 
     #[arg(long = "encrypt")]
     pub encrypt: bool,
