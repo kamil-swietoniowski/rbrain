@@ -1,4 +1,5 @@
 use crate::database::{Database, Record};
+use crate::utility::{search_record_by_tag, search_record_by_title};
 use std::io::Write;
 
 pub fn command_line(path: &str) -> rusqlite::Result<()> {
@@ -27,7 +28,23 @@ pub fn command_line(path: &str) -> rusqlite::Result<()> {
             "rm" => remove_record(&db, commands.get(1).cloned())?, //println!("Removing..."), // todo!()
             "ls" => list_records(&db)?, //println!("Listing..."), // todo!()
             "show" => show_record(&db, commands.get(1).cloned())?, //println!("Showing..."), // todo!()
+            "search" => {
+                if commands.len() == 1 {
+                    println!("Avaible options for 'search' are: 'tag', 'title'");
+                    continue;
+                }
+                match commands[1].as_str() {
+                    "tag" => search_record_tag(&db, commands.get(2).cloned())?,
+                    "title" => search_record_title(&db, commands.get(2).cloned())?,
+                    _ => {}
+                }
+            },
             "tag" => {
+                if commands.len() == 1 {
+                    println!("Avaible options for 'tag' are: 'add', 'rm'");
+                    continue;
+                }
+
                 match commands[1].as_str() {
                     "add" => insert_tag_into_record(&db, commands.get(2).cloned(), commands.get(3).cloned())?,
                     "rm" => remove_tag_from_record(&db, commands.get(2).cloned(), commands.get(3).cloned())?,
@@ -85,9 +102,49 @@ fn show_record(db: &Database, id: Option<String>) -> rusqlite::Result<()> {
     };
 
     let record = db.get_record_from_database(id)?;
-
+    
     record.display();
 
+    Ok(())
+}
+
+fn search_record_tag(db: &Database, tag: Option<String>) -> rusqlite::Result<()> {
+    let records = db.get_all_records_from_database()?;
+    let tag = match tag {
+        Some(ta) => ta,
+        None => input("Input TAG to search for: "),
+    };
+    
+    let found_records = search_record_by_tag(records, &tag).unwrap ();
+
+    if found_records.is_empty() {
+        println!("No records found");
+        return Ok(())
+    }
+
+    for record in found_records {
+        println!("{}", record);
+    };
+    Ok(())
+}
+
+fn search_record_title(db: &Database, title: Option<String>) -> rusqlite::Result<()> {
+    let records = db.get_all_records_from_database()?;
+    let title = match title {
+        Some(ta) => ta,
+        None => input("Input title to search for: "),
+    };
+    
+    let found_records = search_record_by_title(records, &title).unwrap ();
+
+    if found_records.is_empty() {
+        println!("No records found");
+        return Ok(())
+    }
+
+    for record in found_records {
+        println!("{}", record);
+    };
     Ok(())
 }
 
