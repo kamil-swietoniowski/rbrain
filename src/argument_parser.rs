@@ -3,9 +3,17 @@ use clap::{Parser, Subcommand, ArgGroup};
 #[derive(Subcommand)]
 pub enum Commands {
     Ls,
-    Add,
-    Rm,
-    Show,
+    Add {
+        title: Option<String>
+    },
+    Rm {
+        #[arg(default_value_t = 0)]
+        id: i32
+    },
+    Show {
+        #[arg(default_value_t = 0)]
+        id: i32
+    },
     Mod {
         #[arg(long)]
         encrypt: bool,
