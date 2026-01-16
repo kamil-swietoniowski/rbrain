@@ -4,11 +4,12 @@ pub mod app;
 pub mod argument_parser;
 pub mod database;
 pub mod ui;
+pub mod encrypt;
 
 use argument_parser::{Args, Commands};
 use database::{Database, Record};
 
-use crate::ui::simpleui::{add_record, list_records, remove_record, show_record};
+use crate::{encrypt::encrypt, ui::simpleui::{add_record, list_records, remove_record, show_record}};
 
 fn main() -> rusqlite::Result<()> {
     let args = argument_parser::Args::parse();

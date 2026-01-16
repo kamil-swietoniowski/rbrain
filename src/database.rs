@@ -202,8 +202,8 @@ impl Database {
 #[derive(Debug)]
 pub struct Record {
     id: i32,
-    title: Option<String>,
-    content: Option<String>,
+    pub title: Option<String>,
+    pub content: Option<String>,
     modified_at: Option<DateTime<Utc>>,
     created_at: Option<DateTime<Utc>>,
     tags: HashMap<String, bool>,
