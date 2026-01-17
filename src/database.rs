@@ -50,15 +50,27 @@ impl Database {
     pub fn modify_record(
         &self,
         id: i32,
-        title: Option<&str>,
-        content: Option<&str>,
+        title: Option<String>,
+        content: Option<String>,
     ) -> rusqlite::Result<()> {
         let modified_at = Utc::now().to_rfc3339();
 
-        self.conn.execute(
-            "UPDATE record SET title = ?1, content = ?2, modified_at = ?3 WHERE id = ?4",
-            (title, content, modified_at, id),
-        )?;
+        if title.is_some() && content.is_some() {
+            self.conn.execute(
+                "UPDATE record SET title = ?1, content = ?2, modified_at = ?3 WHERE id = ?4",
+                (title.unwrap(), content.unwrap(), modified_at, id),
+            )?;
+        } else if title.is_some() {
+            self.conn.execute(
+                "UPDATE record SET title = ?1, modified_at = ?2 WHERE id = ?3",
+                (title.unwrap(), modified_at, id),
+            )?;
+        } else if content.is_some() {
+            self.conn.execute(
+                "UPDATE record SET content = ?1, modified_at = ?2 WHERE id = ?3",
+                (content.unwrap(), modified_at, id),
+            )?;
+        }
         Ok(())
     }
 

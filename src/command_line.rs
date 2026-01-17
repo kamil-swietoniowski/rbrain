@@ -28,6 +28,18 @@ pub fn command_line(path: &str) -> rusqlite::Result<()> {
             "rm" => remove_record(&db, commands.get(1).cloned())?, //println!("Removing..."), // todo!()
             "ls" => list_records(&db)?, //println!("Listing..."), // todo!()
             "show" => show_record(&db, commands.get(1).cloned())?, //println!("Showing..."), // todo!()
+            "modify" => {
+                if commands.len() == 1 {
+                    println!("Avaible options for 'modify' are: 'title', 'content'");
+                    continue;
+                }
+                match commands[1].as_str() {
+                    "title" => modify_record_title(&db, commands.get(2).cloned(), commands.get(3).cloned())?,
+                    "content" => modify_record_content(&db, commands.get(2).cloned(), commands.get(3).cloned())?,
+                    _ => {}
+                }
+
+            }
             "search" => {
                 if commands.len() == 1 {
                     println!("Avaible options for 'search' are: 'tag', 'title'");
@@ -176,6 +188,36 @@ fn remove_tag_from_record(db: &Database, id: Option<String>, tag: Option<String>
      db.remove_tag_from_record(id, &tag)?;
      println!("Succeed");
      Ok(())
+}
+
+fn modify_record_title(db: &Database, id: Option<String>, title: Option<String>) -> rusqlite::Result<()> {
+    let id = match id {
+        Some(num) => num.parse::<i32>().unwrap(),
+        None => input("Input ID: ").parse::<i32>().unwrap(),
+    };
+
+    let title = match title {
+        Some(title) => Some(title),
+        None => Some(input("Input title to set: "))
+    };
+
+    db.modify_record(id, title, None)?;
+    Ok(())
+}
+
+fn modify_record_content(db: &Database, id: Option<String>, content: Option<String>) -> rusqlite::Result<()> {
+    let id = match id {
+        Some(num) => num.parse::<i32>().unwrap(),
+        None => input("Input ID: ").parse::<i32>().unwrap(),
+    };
+
+    let content = match content {
+        Some(content) => Some(content),
+        None => Some(input("Input content to set: "))
+    };
+
+    db.modify_record(id, None, content)?;
+    Ok(())
 }
 
 fn input(querry: &str) -> String {
