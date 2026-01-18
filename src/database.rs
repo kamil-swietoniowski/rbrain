@@ -258,7 +258,7 @@ impl Record {
         println!("Title:\n{}", self.title.clone().unwrap());
         println!("\nContent:\n{}", self.content.clone().unwrap());
         println!(
-            "\n\nUpdated At: {}\nCreated At: {}",
+            "\nUpdated At: {}\nCreated At: {}",
             data_to_readable(self.modified_at.unwrap()),
             data_to_readable(self.created_at.unwrap())
         );
