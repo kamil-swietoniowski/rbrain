@@ -1,0 +1,11 @@
+[package]
+name = "rbrain"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+base64 = "0.22.1"
+chrono = "0.4.43"
+rusqlite = "0.38.0"
+clap = { version = "4.5.24", features = ["derive"] }
+simple_crypt = "0.2.3"
