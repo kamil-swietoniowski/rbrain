@@ -45,11 +45,11 @@ pub fn menu(app: &mut App) {
             "1" => menu::list_records(app),
             "2" => menu::show_record(app),
             "3" => menu::add_record(app),
-            "4" => todo!(),
-            "5" => todo!(),
-            "6" => todo!(),
+            "4" => menu::del_record(app),
+            "5" => menu::add_tag(app),
+            "6" => menu::del_tag(app),
             "7" => todo!(),
-            "8" => todo!(),
+            "8" => break,
             _ => {
                 eprintln!("Wrong option");
                 continue;
@@ -60,7 +60,7 @@ pub fn menu(app: &mut App) {
 
 mod menu {
     use crate::{
-        api::model::model::Record,
+        api::model::model::{Record, Tag},
         ui::cli::app::{input, App},
     };
     pub fn list_records(app: &App) {
@@ -100,6 +100,57 @@ mod menu {
         let record = Record::new(title, content);
         app.database.insert_record_to_database(&record).unwrap();
     }
+
+    pub fn del_record(app: &App) {
+        let id = input("Enter Record ID: ");
+        let id: i32 = match id.parse() {
+            Ok(num) => num,
+            Err(err) => {
+                eprintln!("Not an correct ID: {}", err);
+                return;
+            }
+        };
+        let _ = app.database.remove_record(id);
+    }
+
+    pub fn add_tag(app: &App) {
+        let record_id = input("Enter Record ID: ");
+        let tag_name = input("Enter TAG name: ");
+        let record_id: i32 = match record_id.parse() {
+            Ok(num) => num,
+            Err(err) => {
+                eprintln!("Not an correct ID: {}", err);
+                return;
+            }
+        };
+
+        app.database
+            .add_tag_to_record(record_id, &tag_name)
+            .unwrap();
+    }
+
+    pub fn del_tag(app: &App) {
+        let record_id = input("Enter Record ID: ");
+        let tag_name = input("Enter TAG name: ");
+        let record_id: i32 = match record_id.parse() {
+            Ok(num) => num,
+            Err(err) => {
+                eprintln!("Not an correct ID: {}", err);
+                return;
+            }
+        };
+
+        app.database
+            .remove_tag_from_record(record_id, &tag_name)
+            .unwrap();
+    }
+
+    //pub fn get_all_tags(app: &App) {
+    //    let tags: Vec<Tag> = app.database.get_all_records_from_database().unwrap();
+    //    for tag in tags {
+    //        println!("{}", tag.name)
+    //    }
+    //}
 }
 
 fn input(querry: &str) -> String {
