@@ -1,1 +1,1 @@
-pub mod model.rs;
+pub mod model;

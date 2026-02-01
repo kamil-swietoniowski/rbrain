@@ -1,3 +1,3 @@
-fn main() {
-    println!("Hello, world!");
-}
+use rbrain::ui::cli::app;
+
+fn main() {}
