@@ -5,12 +5,12 @@ use crate::{
         database::database::Database,
         model::model::{Record, Tag},
     },
-    ui::cli::argument_parser::{self, Args},
+    ui::cli::argument_parser::{Args, Commands},
 };
 use std::{
     fs,
     io::{self, Write},
-    path::{self, Path},
+    path::{Path},
 };
 
 pub struct App {
@@ -22,8 +22,8 @@ pub struct App {
 
 enum Action {
     Operatian((Option<String>, Source)),
-    Show(i32),
-    Delete(i32),
+    Show(Option<i32>),
+    Delete(Option<i32>),
     List,
 }
 
@@ -77,28 +77,51 @@ impl App {
         // To implement Pipe
         let args = Args::parse();
 
-        if args.list {
-            return Action::List;
-        } else if args.show.is_some() {
-            return Action::Show(args.show.unwrap());
-        }
-
-        let title = args.title;
-
-        if args.delete.is_some() {
-            return Action::Delete(args.delete.unwrap());
-        }
-
-        if args.content.is_some() {
-            return Action::Operatian((title, Source::Argument(args.content.unwrap())));
-        } else if args.file.is_some() {
-            let filestring = args.file.unwrap();
-            let file = Path::new(&filestring);
-            if file.is_file() {
-                return Action::Operatian((title, Source::File(filestring)));
+        match args.command {
+            Commands::List => Action::List,
+            Commands::Show{id} => Action::Show(id),
+            Commands::Delete{id} => Action::Delete(id),
+            Commands::Add { title, content, file } => {
+                if file.is_some() {
+                    return Action::Operatian((title, Source::File(file.unwrap())));
+                } else if content.is_some() {
+                    return  Action::Operatian((title, Source::Argument(content.unwrap())));
+                } else {
+                    return Action::Operatian((None, Source::Menu));
+                }
             }
         }
-        Action::Operatian((title, Source::Menu))
+        // if args.list {
+        //     return Action::List;
+        // } else if args.show.is_some() {
+        //     return Action::Show(args.show.unwrap());
+        // }
+        //
+        // let title = args.title;
+        //
+        // if args.delete.is_some() {
+        //     return Action::Delete(args.delete.unwrap());
+        // }
+        //
+        // if args.content.is_some() {
+        //     return Action::Operatian((title, Source::Argument(args.content.unwrap())));
+        // } else if args.file.is_some() {
+        //     let filestring = args.file.unwrap();
+        //     let file = Path::new(&filestring);
+        //     if file.is_file() {
+        //         return Action::Operatian((title, Source::File(filestring)));
+        //     }
+        // }
+        // Action::Operatian((title, Source::Menu))
+    }
+}
+
+fn get_id(id: Option<i32>) -> i32 {
+    match id {
+        Some(id) => id,
+        None => {
+            input("Enter ID: ").parse::<i32>().expect("Enter an number")
+        }
     }
 }
 
@@ -113,7 +136,9 @@ fn list_all_records(app: &App) {
         println!("{record}")
     }
 }
-fn show_record(app: &App, id: i32) {
+fn show_record(app: &App, id: Option<i32>) {
+   let id = get_id(id);
+
     let record = match app.database.get_record_from_database(id) {
         Ok(rec) => rec,
         Err(err) => {
@@ -123,7 +148,8 @@ fn show_record(app: &App, id: i32) {
     };
     record.display();
 }
-fn delete_record(app: &App, id: i32) {
+fn delete_record(app: &App, id: Option<i32>) {
+    let id = get_id(id);
     let choice = input("Are you sure you want to delete?: (y/n)");
     if choice.trim() != "y" {
         return;
