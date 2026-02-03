@@ -1,14 +1,36 @@
-use crate::api::{
-    database::database::Database,
-    model::model::{Record, Tag},
+use clap::Parser;
+
+use crate::{
+    api::{
+        database::database::Database,
+        model::model::{Record, Tag},
+    },
+    ui::cli::argument_parser::{self, Args},
 };
-use std::io::{self, Write};
+use std::{
+    fs,
+    io::{self, Write},
+    path::{self, Path},
+};
 
 pub struct App {
     pub database: Database,
     pub current_record: Record,
     pub list_of_records: Vec<Record>,
     pub all_tags: Vec<Tag>,
+}
+
+enum Action {
+    Operatian((Option<String>, Source)),
+    Show(i32),
+    List,
+}
+
+enum Source {
+    Menu,
+    File(String),
+    Pipe,
+    Argument(String),
 }
 
 impl App {
@@ -32,9 +54,91 @@ impl App {
         }
     }
     pub fn run(&mut self) {
-        menu(self);
+        let status = Self::define_content_source();
+        match status {
+            Action::List => list_all_records(self),
+            Action::Show(id) => show_record(self, id),
+            Action::Operatian((title, source)) => match (title, source) {
+                (_, Source::Menu) => menu(self),
+                (None, Source::File(file)) => add_record_by_file(self, None, file),
+                (title, Source::File(file)) => add_record_by_file(self, title, file),
+                (Some(title), Source::Argument(content)) => {
+                    add_record_by_argument(self, Some(title), content)
+                }
+                (None, Source::Argument(content)) => add_record_by_argument(self, None, content),
+                (Some(title), Source::Pipe) => add_record_by_pipe(self, title),
+                _ => {}
+            },
+        }
+    }
+    pub fn define_content_source() -> Action {
+        // To implement Pipe
+        let args = Args::parse();
+        if args.list {
+            return Action::List;
+        } else if args.show.is_some() {
+            return Action::Show(args.show.unwrap());
+        }
+
+        let title = args.title;
+
+        if args.content.is_some() {
+            return Action::Operatian((title, Source::Argument(args.content.unwrap())));
+        } else if args.file.is_some() {
+            let filestring = args.file.unwrap();
+            let file = Path::new(&filestring);
+            if file.is_file() {
+                return Action::Operatian((title, Source::File(filestring)));
+            }
+        }
+        Action::Operatian((title, Source::Menu))
     }
 }
+
+fn list_all_records(app: &App) {
+    let list_of_records = app.database.get_all_records_from_database().unwrap();
+    if list_of_records.is_empty() {
+        eprintln!("Empty list");
+        return;
+    }
+
+    for record in &list_of_records {
+        println!("{record}")
+    }
+}
+fn show_record(app: &App, id: i32) {
+    let record = match app.database.get_record_from_database(id) {
+        Ok(rec) => rec,
+        Err(err) => {
+            eprintln!("Couldn't find if or other problem: {}", err);
+            return;
+        }
+    };
+    record.display();
+}
+fn add_record_by_file(app: &App, title: Option<String>, file: String) {
+    let title = match title {
+        Some(title) => Some(title),
+        None => Some(input("Enter a title: ")),
+    };
+
+    let file = Path::new(&file);
+
+    let content = Some(fs::read_to_string(file).expect("Can't access file"));
+
+    let record = Record::new(title, content);
+    app.database.insert_record_to_database(&record).unwrap();
+}
+fn add_record_by_argument(app: &App, title: Option<String>, text: String) {
+    let title = match title {
+        Some(title) => Some(title),
+        None => Some(input("Enter a title: ")),
+    };
+
+    let record = Record::new(title, Some(text));
+    app.database.insert_record_to_database(&record).unwrap();
+}
+fn add_record_by_pipe(app: &App, title: String) {}
 
 pub fn menu(app: &mut App) {
     loop {
