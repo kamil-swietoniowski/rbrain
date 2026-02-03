@@ -19,6 +19,9 @@ pub struct Args {
 
     #[arg(short, long)]
     pub show: Option<i32>,
+
+    #[arg(short, long)]
+    pub delete: Option<i32>,
     //#[arg(short, long, default_value_t = 1)]
     //count: u8,
 }

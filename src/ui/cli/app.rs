@@ -23,6 +23,7 @@ pub struct App {
 enum Action {
     Operatian((Option<String>, Source)),
     Show(i32),
+    Delete(i32),
     List,
 }
 
@@ -58,6 +59,7 @@ impl App {
         match status {
             Action::List => list_all_records(self),
             Action::Show(id) => show_record(self, id),
+            Action::Delete(id) => delete_record(self, id),
             Action::Operatian((title, source)) => match (title, source) {
                 (_, Source::Menu) => menu(self),
                 (None, Source::File(file)) => add_record_by_file(self, None, file),
@@ -74,6 +76,7 @@ impl App {
     pub fn define_content_source() -> Action {
         // To implement Pipe
         let args = Args::parse();
+
         if args.list {
             return Action::List;
         } else if args.show.is_some() {
@@ -81,6 +84,10 @@ impl App {
         }
 
         let title = args.title;
+
+        if args.delete.is_some() {
+            return Action::Delete(args.delete.unwrap());
+        }
 
         if args.content.is_some() {
             return Action::Operatian((title, Source::Argument(args.content.unwrap())));
@@ -115,6 +122,13 @@ fn show_record(app: &App, id: i32) {
         }
     };
     record.display();
+}
+fn delete_record(app: &App, id: i32) {
+    let choice = input("Are you sure you want to delete?: (y/n)");
+    if choice.trim() != "y" {
+        return;
+    }
+    let _ = app.database.remove_record(id);
 }
 fn add_record_by_file(app: &App, title: Option<String>, file: String) {
     let title = match title {
