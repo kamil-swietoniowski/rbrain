@@ -1,3 +1,4 @@
+use chrono::format::InternalNumeric;
 use clap::Parser;
 
 use crate::{
@@ -10,7 +11,7 @@ use crate::{
 use std::{
     fs,
     io::{self, Write},
-    path::{Path},
+    path::Path,
 };
 
 pub struct App {
@@ -25,6 +26,7 @@ enum Action {
     Show(Option<i32>),
     Delete(Option<i32>),
     List,
+    Menu,
 }
 
 enum Source {
@@ -32,6 +34,7 @@ enum Source {
     File(String),
     Pipe,
     Argument(String),
+    AddTC,
 }
 
 impl App {
@@ -60,6 +63,7 @@ impl App {
             Action::List => list_all_records(self),
             Action::Show(id) => show_record(self, id),
             Action::Delete(id) => delete_record(self, id),
+            Action::Menu => menu(self),
             Action::Operatian((title, source)) => match (title, source) {
                 (_, Source::Menu) => menu(self),
                 (None, Source::File(file)) => add_record_by_file(self, None, file),
@@ -69,6 +73,7 @@ impl App {
                 }
                 (None, Source::Argument(content)) => add_record_by_argument(self, None, content),
                 (Some(title), Source::Pipe) => add_record_by_pipe(self, title),
+                (None, Source::AddTC) => add_c_t_fn(self),
                 _ => {}
             },
         }
@@ -79,17 +84,22 @@ impl App {
 
         match args.command {
             Commands::List => Action::List,
-            Commands::Show{id} => Action::Show(id),
-            Commands::Delete{id} => Action::Delete(id),
-            Commands::Add { title, content, file } => {
+            Commands::Show { id } => Action::Show(id),
+            Commands::Delete { id } => Action::Delete(id),
+            Commands::Add {
+                title,
+                content,
+                file,
+            } => {
                 if file.is_some() {
                     return Action::Operatian((title, Source::File(file.unwrap())));
                 } else if content.is_some() {
-                    return  Action::Operatian((title, Source::Argument(content.unwrap())));
+                    return Action::Operatian((title, Source::Argument(content.unwrap())));
                 } else {
-                    return Action::Operatian((None, Source::Menu));
+                    return Action::Operatian((None, Source::AddTC));
                 }
             }
+            Commands::Menu => Action::Menu,
         }
         // if args.list {
         //     return Action::List;
@@ -116,12 +126,18 @@ impl App {
     }
 }
 
+fn add_c_t_fn(app: &App) {
+    let title = Some(input("Enter title: "));
+    let content = Some(input("Enter content: "));
+
+    let record = Record::new(title, content);
+    app.database.insert_record_to_database(&record).unwrap();
+}
+
 fn get_id(id: Option<i32>) -> i32 {
     match id {
         Some(id) => id,
-        None => {
-            input("Enter ID: ").parse::<i32>().expect("Enter an number")
-        }
+        None => input("Enter ID: ").parse::<i32>().expect("Enter an number"),
     }
 }
 
@@ -137,7 +153,7 @@ fn list_all_records(app: &App) {
     }
 }
 fn show_record(app: &App, id: Option<i32>) {
-   let id = get_id(id);
+    let id = get_id(id);
 
     let record = match app.database.get_record_from_database(id) {
         Ok(rec) => rec,

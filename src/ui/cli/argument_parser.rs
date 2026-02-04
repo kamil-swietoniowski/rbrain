@@ -4,12 +4,12 @@ use clap::{ArgGroup, Parser, Subcommand};
 pub enum Commands {
     Show {
         #[arg(short, long)]
-        id: Option<i32>
+        id: Option<i32>,
     },
     Delete {
         #[arg(short, long)]
-        id: Option<i32>
-    }, 
+        id: Option<i32>,
+    },
     List,
     Add {
         #[arg(short, long)]
@@ -20,8 +20,8 @@ pub enum Commands {
 
         #[arg(short, long, conflicts_with = "content")]
         file: Option<String>,
-
     },
+    Menu,
 }
 
 #[derive(Parser, Debug)]
