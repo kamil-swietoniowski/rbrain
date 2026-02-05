@@ -1,16 +1,23 @@
-use clap::{ArgGroup, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    Show {
-        #[arg(short, long)]
+    Get {
+        #[arg(long)]
         id: Option<i32>,
     },
-    Delete {
-        #[arg(short, long)]
+    Ls,
+    Rm {
+        #[arg(long)]
         id: Option<i32>,
     },
-    List,
+    Lf {
+        #[arg(long, short, conflicts_with = "content")] 
+        title: Option<String>,
+
+        #[arg(long, short, conflicts_with = "title")]
+        content: Option<String>,
+    },
     Add {
         #[arg(short, long)]
         title: Option<String>,
@@ -20,26 +27,125 @@ pub enum Commands {
 
         #[arg(short, long, conflicts_with = "content")]
         file: Option<String>,
+
+        #[arg(long)]
+        encrypt: bool,
+    },
+    Mod {
+        #[arg(long)]
+        id: Option<i32>,
+
+        #[arg(short, long)]
+        title: Option<String>,
+
+        #[arg(short, long)]
+        content: Option<String>,
+
+        #[arg(long, conflicts_with = "appendf")]
+        append: Option<String>,
+    
+        #[arg(long, conflicts_with = "append")]
+        appendf: Option<String>,
+
+        #[arg(long, conflicts_with = "decrypt")]
+        encrypt: bool,
+
+        #[arg(long, conflicts_with = "encrypt")]
+        decrypt: bool,
     },
     Menu,
+
 }
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 // , group(
 //         ArgGroup::new("case").required(false).args(["content", "file"])
-// ))]
+ // ))]
 pub struct Args {
     #[command(subcommand)]
     pub command: Commands,
-    // #[arg(short, long)]
-    // pub list: bool,
-    //
-    // #[arg(short, long)]
-    // pub show: Option<i32>,
-    //
-    // #[arg(short, long)]
-    // pub delete: Option<i32>,
-    //#[arg(short, long, default_value_t = 1)]
-    //count: u8,
+}
+
+
+pub enum Action {
+    Add(Option<String>, Source, bool),
+    Get(Option<i32>),
+    Ls,
+    Rm(Option<i32>),
+    Lf(LookFor),
+    Mod(Option<i32>, Option<String>, Option<String>, Append, Encrypt), 
+    Menu,
+}
+
+pub enum Append {
+    Append(String),
+    AppendFile(String),
+    NotSpecified,
+}
+
+pub enum LookFor {
+    Title(String),
+    Content(String),
+    NotSpecified,
+}
+pub enum Source {
+    Content(Option<String>),
+    File(Option<String>),
+    NotSpecified,
+}
+pub enum Encrypt {
+    Encrypt,
+    Decrypt,
+    Nothing,
+}
+
+
+impl Args {
+    pub fn collect() -> Action {
+        let args = Args::parse();
+        
+        match args.command {
+            Commands::Add { title, content, file, encrypt } => {
+                let source = if file.is_some() {
+                    Source::File(file)
+                } else if content.is_some() {
+                    Source::Content(content)
+                } else {
+                    Source::NotSpecified
+                }; 
+                Action::Add(title, source, encrypt)
+            },
+            Commands::Ls => Action::Ls,
+            Commands::Lf { title, content } => {
+                let var = match (title, content) {
+                    (Some(title), None) => LookFor::Title(title),
+                    (None, Some(content)) => LookFor::Content(content),
+                    (None, None) => LookFor::NotSpecified,
+                    (_, _) => {
+                        eprintln!("Something went wrong");
+                        std::process::exit(1);
+                    },
+                };
+
+                Action::Lf(var)
+            },
+            Commands::Rm { id } => Action::Rm(id),
+            Commands::Mod { id, title, content, append, appendf, encrypt, decrypt } => {
+                let append = match (append, appendf) {
+                    (Some(app), None) => Append::Append(app),
+                    (None, Some(app)) => Append::AppendFile(app),
+                    _ => Append::NotSpecified,
+                };
+                let enc = match (encrypt, decrypt) {
+                    (true, false) => Encrypt::Encrypt,
+                    (false, true) => Encrypt::Decrypt,
+                    _ => Encrypt::Nothing,
+                };
+                Action::Mod(id, title, content, append, enc)
+            },
+            Commands::Get { id } => Action::Get(id),
+            Commands::Menu => Action::Menu
+        }
+    }
 }

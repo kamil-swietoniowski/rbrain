@@ -1,0 +1,94 @@
+use clap::{ArgGroup, Parser, Subcommand};
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    Get {
+        #[arg(long)]
+        id: Option<i32>,
+    },
+    Ls,
+    Rm {
+        #[arg(long)]
+        id: Option<i32>,
+    },
+    Lf,
+    Add {
+        #[arg(short, long)]
+        title: Option<String>,
+
+        #[arg(short, long, conflicts_with = "file")]
+        content: Option<String>,
+
+        #[arg(short, long, conflicts_with = "content")]
+        file: Option<String>,
+
+        #[arg(long)]
+        encrypt: bool,
+    },
+    Mod {
+        #[arg(short, long)]
+        title: Option<String>,
+
+        #[arg(short, long)]
+        content: Option<String>,
+
+        #[arg(long, conflicts_with = "appendf")]
+        append: Option<String>,
+    
+        #[arg(long, conflicts_with = "append")]
+        appendf: Option<String>,
+
+        #[arg(long, conflicts_with = "decrypt")]
+        encrypt: bool,
+
+        #[arg(long, conflicts_with = "encrypt")]
+        decrypt: bool,
+
+    }
+
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+// , group(
+//         ArgGroup::new("case").required(false).args(["content", "file"])
+// ))]
+pub struct Args {
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+
+pub enum Action {
+    Add(Option<String>, Source, Encrypt),
+    Get(Option<i32>),
+    Ls,
+    Rm(Option<i32>),
+    Lf(LookFor),
+    Mod(Option<i32>, Option<String>, Option<String>, Append, Encrypt), 
+}
+
+pub enum Append {
+    Append(String),
+    AppendFile(String),
+}
+
+pub enum LookFor {
+    Title(String),
+    Content(String),
+}
+pub enum Source {
+    Content(Option<String>),
+    File(Option<String>),
+}
+pub enum Encrypt {
+    Encrypt,
+    Decrypt,
+}
+
+
+impl Args {
+    pub fn collect() -> Action {
+        let args = Args::parse();
+    }
+}
