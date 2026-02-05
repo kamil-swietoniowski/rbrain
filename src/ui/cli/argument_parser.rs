@@ -10,6 +10,9 @@ pub enum Commands {
     Rm {
         #[arg(long)]
         id: Option<i32>,
+
+        #[arg(long)]
+        force: bool,
     },
     Lf {
         #[arg(long, short, conflicts_with = "content")] 
@@ -72,12 +75,13 @@ pub enum Action {
     Add(Option<String>, Source, bool),
     Get(Option<i32>),
     Ls,
-    Rm(Option<i32>),
+    Rm(Option<i32>, bool),
     Lf(LookFor),
     Mod(Option<i32>, Option<String>, Option<String>, Append, Encrypt), 
     Menu,
 }
 
+#[derive(PartialEq)]
 pub enum Append {
     Append(String),
     AppendFile(String),
@@ -130,7 +134,7 @@ impl Args {
 
                 Action::Lf(var)
             },
-            Commands::Rm { id } => Action::Rm(id),
+            Commands::Rm { id, force } => Action::Rm(id, force),
             Commands::Mod { id, title, content, append, appendf, encrypt, decrypt } => {
                 let append = match (append, appendf) {
                     (Some(app), None) => Append::Append(app),
