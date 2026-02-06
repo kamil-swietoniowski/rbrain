@@ -210,6 +210,16 @@ impl Database {
         self.conn.execute("DELETE FROM tag WHERE tag = ?1", [tag])?;
         Ok(())
     }
+
+    pub fn get_all_tags(&self) -> rusqlite::Result<Vec<String>> {
+        let mut stmt = self.conn.prepare("SELECT tag FROM tag")?;
+        let tag_iter = stmt.query_map([], |row| row.get(0))?;
+        let mut tags: Vec<String> = Vec::new();
+        for tag in tag_iter {
+            tags.push(tag?);
+        }
+        Ok(tags)
+    }
 }
 
 #[cfg(test)]
