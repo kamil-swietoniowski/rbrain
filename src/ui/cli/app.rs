@@ -86,10 +86,7 @@ pub fn list_records(app: &App) {
     }
 }
 pub fn get_record(app: &App, id: Option<i32>) {
-    let id = match id {
-        Some(id) => id,
-        None => input("Enter ID: ").parse::<i32>().expect("Enter a number"),
-    };
+    let id = get_parse_id(id);
     let record = match app.database.get_record_from_database(id) {
         Ok(rec) => rec,
         Err(err) => {
@@ -127,11 +124,7 @@ pub fn add_record(app: &App, title: Option<String>, source: Source, encrypt: boo
         .expect("Error while accessing Database");
 }
 pub fn remove_record(app: &App, id: Option<i32>, force: bool) {
-    let id = match id {
-        Some(id) => id,
-        None => input("Enter ID: ").parse::<i32>().expect("Not correct ID"),
-    };
-
+    let id = get_parse_id(id);
     if !force && input("Are you sure you want to delete record(y/n): ").to_lowercase() != "y" {
         println!("Cancelled");
         return;
@@ -148,10 +141,8 @@ pub fn modification_record(
     append: Append,
     encrypt: Encrypt,
 ) {
-    let id = match id {
-        Some(id) => id,
-        None => input("Enter ID: ").parse::<i32>().expect("Not correct ID"),
-    };
+    let id = get_parse_id(id);
+
     let title = match title {
         Some(title) => Some(title),
         None => Some(input("Enter title: ")),
@@ -185,12 +176,7 @@ pub fn modification_record(
 }
 
 fn add_tag(app: &App, id: Option<i32>, tag: Option<String>) {
-    let id = match id {
-        Some(id) => id,
-        None => input("Enter ID: ")
-            .parse::<i32>()
-            .expect("Enter correct ID"),
-    };
+    let id = get_parse_id(id);
     let tag = match tag {
         Some(tag) => tag,
         None => input("Enter TAG name: "),
@@ -202,12 +188,7 @@ fn add_tag(app: &App, id: Option<i32>, tag: Option<String>) {
     };
 }
 fn remove_tag(app: &App, id: Option<i32>, tag: Option<String>, force: bool) {
-    let id = match id {
-        Some(id) => id,
-        None => input("Enter ID: ")
-            .parse::<i32>()
-            .expect("Enter correct ID"),
-    };
+    let id = get_parse_id(id);
     let tag = match tag {
         Some(tag) => tag,
         None => input("Enter TAG name: "),
@@ -245,13 +226,13 @@ pub fn menu(app: &mut App) {
         let user_option = input("I choose: ");
 
         match user_option.as_str() {
-            "1" => menu::list_records(app),
-            "2" => menu::show_record(app),
-            "3" => menu::add_record(app),
-            "4" => menu::del_record(app),
-            "5" => menu::add_tag(app),
-            "6" => menu::del_tag(app),
-            "7" => todo!(),
+            "1" => list_records(app),
+            "2" => get_record(app, None),
+            "3" => add_record(app, None, Source::NotSpecified, false),
+            "4" => remove_record(app, None, false),
+            "5" => add_tag(app, None, None),
+            "6" => remove_tag(app, None, None, false),
+            "7" => list_tags(app),
             "8" => break,
             _ => {
                 eprintln!("Wrong option");
@@ -261,105 +242,27 @@ pub fn menu(app: &mut App) {
     }
 }
 
-mod menu {
-    use crate::{
-        api::model::model::{Record, Tag},
-        ui::cli::app::{input, App},
-    };
-    pub fn list_records(app: &App) {
-        let list_of_records = app.database.get_all_records_from_database().unwrap();
-
-        if list_of_records.is_empty() {
-            eprintln!("Empty list");
-            return;
-        }
-
-        for record in &list_of_records {
-            println!("{record}")
-        }
-    }
-    pub fn show_record(app: &App) {
-        let id = input("Enter Record ID: ");
-        let id: i32 = match id.parse() {
-            Ok(num) => num,
-            Err(err) => {
-                eprintln!("Not an correct ID: {}", err);
-                return;
-            }
-        };
-        let record = match app.database.get_record_from_database(id) {
-            Ok(rec) => rec,
-            Err(err) => {
-                eprintln!("Couldn't find if or other problem: {}", err);
-                return;
-            }
-        };
-        record.display();
-    }
-
-    pub fn add_record(app: &App) {
-        let title = Some(input("Enter title: "));
-        let content = Some(input("Enter content: "));
-        let record = Record::new(title, content);
-        app.database.insert_record_to_database(&record).unwrap();
-    }
-
-    pub fn del_record(app: &App) {
-        let id = input("Enter Record ID: ");
-        let id: i32 = match id.parse() {
-            Ok(num) => num,
-            Err(err) => {
-                eprintln!("Not an correct ID: {}", err);
-                return;
-            }
-        };
-        let _ = app.database.remove_record(id);
-    }
-
-    pub fn add_tag(app: &App) {
-        let record_id = input("Enter Record ID: ");
-        let tag_name = input("Enter TAG name: ");
-        let record_id: i32 = match record_id.parse() {
-            Ok(num) => num,
-            Err(err) => {
-                eprintln!("Not an correct ID: {}", err);
-                return;
-            }
-        };
-
-        app.database
-            .add_tag_to_record(record_id, &tag_name)
-            .unwrap();
-    }
-
-    pub fn del_tag(app: &App) {
-        let record_id = input("Enter Record ID: ");
-        let tag_name = input("Enter TAG name: ");
-        let record_id: i32 = match record_id.parse() {
-            Ok(num) => num,
-            Err(err) => {
-                eprintln!("Not an correct ID: {}", err);
-                return;
-            }
-        };
-
-        app.database
-            .remove_tag_from_record(record_id, &tag_name)
-            .unwrap();
-    }
-
-    //pub fn get_all_tags(app: &App) {
-    //    let tags: Vec<Tag> = app.database.get_all_records_from_database().unwrap();
-    //    for tag in tags {
-    //        println!("{}", tag.name)
-    //    }
-    //}
-}
-
 fn input(querry: &str) -> String {
     let mut buf = String::new();
     print!("{querry}");
     let _ = io::stdout().flush();
     io::stdin().read_line(&mut buf).expect("Error with input");
     buf.trim().to_string()
+}
+
+fn get_parse_id(id: Option<i32>) -> i32 {
+    loop {
+        match id {
+            Some(id) => return id,
+            None => {
+                return match input("Enter ID: ").parse::<i32>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        println!("Not correct ID: ");
+                        continue;
+                    }
+                }
+            }
+        }
+    }
 }
