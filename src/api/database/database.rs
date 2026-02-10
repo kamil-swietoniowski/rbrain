@@ -220,6 +220,49 @@ impl Database {
         }
         Ok(tags)
     }
+
+    pub fn search_for_title(&self, phrase: &str) -> rusqlite::Result<Vec<Search>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, title FROM record WHERE title LIKE ?1")?;
+        let results = stmt.query_map([&format!("%{}%", phrase)], |row| {
+            Ok(Search {
+                id: row.get(0)?,
+                line: row.get(1)?,
+            })
+        })?;
+
+        let mut matches = Vec::new();
+
+        for result in results {
+            matches.push(result?);
+        }
+        Ok(matches)
+    }
+
+    pub fn search_for_content(&self, phrase: &str) -> rusqlite::Result<Vec<Search>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, content FROM record WHERE title LIKE ?1")?;
+        let results = stmt.query_map([&format!("%{}%", phrase)], |row| {
+            Ok(Search {
+                id: row.get(0)?,
+                line: row.get(1)?,
+            })
+        })?;
+
+        let mut matches = Vec::new();
+
+        for result in results {
+            matches.push(result?);
+        }
+        Ok(matches)
+    }
+}
+
+pub struct Search {
+    pub id: i32,
+    pub line: String,
 }
 
 #[cfg(test)]

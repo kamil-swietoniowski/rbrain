@@ -1,6 +1,6 @@
 use crate::{
     api::{
-        database::database::Database,
+        database::database::{Database, Search},
         model::model::{Record, Tag},
     },
     ui::cli::argument_parser::{Action, Append, Args, Encrypt, LookFor, Source, TagAct},
@@ -18,22 +18,6 @@ pub struct App {
     pub all_tags: Vec<Tag>,
 }
 
-// enum Action {
-//     Operatian((Option<String>, Source)),
-//     Show(Option<i32>),
-//     Delete(Option<i32>),
-//     List,
-//     Menu,
-// }
-//
-// enum Source {
-//     Menu,
-//     File(String),
-//     Pipe,
-//     Argument(String),
-//     AddTC,
-// }
-//
 impl App {
     pub fn new(database_name: &str) -> Self {
         let database = Database::new(database_name);
@@ -132,7 +116,29 @@ pub fn remove_record(app: &App, id: Option<i32>, force: bool) {
 
     let _ = app.database.remove_record(id);
 }
-pub fn look_for(app: &App, look_for: LookFor) {}
+pub fn look_for(app: &App, look_for: LookFor) {
+    match look_for {
+        LookFor::Title(text) => look_for_title(app, text),
+        LookFor::Content(text) => look_for_content(app, text),
+        LookFor::Tag(_tag) => {}
+        LookFor::NotSpecified => {}
+    }
+}
+
+fn look_for_title(app: &App, title: String) {
+    let result = app.database.search_for_title(&title).unwrap();
+    for search in result {
+        println!("ID: {}, LINE: {}", search.id, search.line);
+    }
+}
+
+fn look_for_content(app: &App, content: String) {
+    let result = app.database.search_for_content(&content).unwrap();
+    for search in result {
+        println!("ID: {}, LINE: {}", search.id, search.line);
+    }
+}
+
 pub fn modification_record(
     app: &App,
     id: Option<i32>,

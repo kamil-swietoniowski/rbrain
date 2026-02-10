@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS record (
   id INTEGER PRIMARY KEY,
   title TEXT,
-  content BLOB,
+  content TEXT,
   modified_at TEXT,
   created_at TEXT
 );

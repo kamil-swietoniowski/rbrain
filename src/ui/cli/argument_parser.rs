@@ -109,6 +109,7 @@ pub enum Append {
 pub enum LookFor {
     Title(String),
     Content(String),
+    Tag(String),
     NotSpecified,
 }
 pub enum Source {

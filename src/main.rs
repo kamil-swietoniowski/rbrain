@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use dirs;
 use rbrain::ui::cli::app;
 
