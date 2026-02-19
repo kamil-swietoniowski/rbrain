@@ -1,10 +1,11 @@
 use std::fmt;
-use chrono::{Utc};
+
+use crate::api::utils::util_tools;
 
 pub struct Record {
     pub id: i32,
     pub title: String,
-    pub content: String, 
+    pub content: Option<String>, 
     pub tags: Vec<String>,
     pub relation: Vec<i32>,
     pub updated_at: String,
@@ -13,11 +14,11 @@ pub struct Record {
 
 impl Record {
     pub fn new(title: &str, content: &str) -> Self {
-        let now = Utc::now().format("%H:%M %d-%m-%Y").to_string();
+        let now = util_tools::now();
         Record {
             id: 0,
             title: title.into(),
-            content: content.into(),
+            content: Some(content.into()),
             tags: Vec::new(),
             relation: Vec::new(),
             updated_at: now.clone(),
@@ -30,7 +31,7 @@ impl Record {
         println!("ID: {} TITLE: \n{}\nCONTENT: {}\n------------------------\nTAGS: {}\nUPDATED AT {}\nCREATED AT {}",
             self.id,
             self.title,
-            self.content,
+            self.content.clone().unwrap_or("".into()),
             self.tags.join(", "),
             self.updated_at,
             self.created_at
