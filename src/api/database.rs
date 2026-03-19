@@ -1,5 +1,3 @@
-use std::fmt::Result;
-
 use rusqlite::{Connection};
 
 const SCHEMA: &str = include_str!("./schema.sql");
