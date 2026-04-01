@@ -66,6 +66,32 @@ impl Database {
         )
 
     }
+
+    pub fn get_all_notes_from_database(&self) -> rusqlite::Result<Vec<Note>> {
+        let mut stmt = self.conn
+            .prepare("SELECT id, title, created_at, modified_at FROM note")?;
+        let note_iter = stmt.query_map([], |row| {
+            let id: Option<i32> = row.get(0)?; 
+            let title = row.get(1)?;
+            let created_at = row.get(2)?;
+            let modified_at = row.get(3)?;
+
+            Ok(Note {
+                id,
+                title,
+                content: None,
+                created_at,
+                modified_at
+            })
+        })?;
+        
+        let mut notes = Vec::new();
+        for note in note_iter {
+            notes.push(note?);
+        }
+
+        Ok(notes)
+    }
 }
 
 
@@ -76,7 +102,6 @@ mod tests {
 
     #[test]
     fn note_in_and_out() -> rusqlite::Result<()> {
-
         let file = "innouttest.db";
 
         let db = Database::new(file);
@@ -101,4 +126,39 @@ mod tests {
         fs::remove_file(file).expect("Error with deleting test database");
         Ok(())
     }
+
+    #[test]
+    fn get_all_notes() ->rusqlite::Result<()> {
+        let file = "getallnotestest.db";
+
+        let db = Database::new(file);
+        let title1 = Some("Test title 1".to_string());
+        let title2 = Some("Test title 2".to_string());
+
+        let note1 = Note::new(title1.clone(), None);
+        let note2 = Note::new(title2.clone(), None);
+
+        db.insert_note_to_database(&note1)?;
+        db.insert_note_to_database(&note2)?;
+
+        let notes = db.get_all_notes_from_database().unwrap();
+
+        let t1 = notes.first().unwrap();
+        let t2 = notes.get(1).unwrap();
+
+        assert_eq!(
+            title1,
+            t1.title
+        );
+
+        assert_eq!(
+            title2,
+            t2.title
+        );
+
+        fs::remove_file(file).expect("Error with deleting test database");
+        Ok(())
+
+    }
+
 }
