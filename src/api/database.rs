@@ -31,8 +31,8 @@ impl Database {
             None => &"".to_string(),
         };
         let content = match &note.content {
-            Some(content) => content.as_bytes().to_vec(),
-            None => Vec::new(),
+            Some(content) => content,
+            None => &"".to_string(),
         };
         let modified_at = match &note.modified_at {
             Some(modified) => modified,
@@ -44,7 +44,7 @@ impl Database {
         };
 
         self.conn.execute(
-            "INSERT INTO note (title, content, created_at, modified_at) FROM note VALUES (?1, ?2, ?3, ?4)",
+            "INSERT INTO note (title, content, created_at, modified_at) VALUES (?1, ?2, ?3, ?4)",
             (title, content, modified_at, created_at)
         )?;
         Ok(())
@@ -58,18 +58,9 @@ impl Database {
                 Ok(Note {
                     id: row.get(0)?,
                     title: row.get(1)?,
-                    content: {
-                        let content: Option<String> = row
-                            .get::<_, Option<Vec<u8>>>(2)?
-                            .and_then(|bytes| String::from_utf8(bytes).ok());
-                        content
-                    },
-                    modified_at: {
-                        Some(row.get(3)?)
-                    },
-                    created_at: {
-                        Some(row.get(4)?)
-                    },
+                    content: row.get(2)?,
+                    modified_at: Some(row.get(3)?),
+                    created_at: Some(row.get(4)?)
                 })
             },
         )
