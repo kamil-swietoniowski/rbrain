@@ -1,11 +1,11 @@
 use chrono::{DateTime, Local, Utc};
 
 pub struct Note {
-    id: Option<i32>,
-    title: Option<String>,
-    content: Option<String>,
-    modified_at: Option<String>,
-    created_at: Option<String>
+    pub id: Option<i32>,
+    pub title: Option<String>,
+    pub content: Option<String>,
+    pub modified_at: Option<String>,
+    pub created_at: Option<String>
 }
 
 impl Note {
