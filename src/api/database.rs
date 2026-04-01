@@ -66,8 +66,39 @@ impl Database {
         )
 
     }
+}
 
 
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use super::*;
 
+    #[test]
+    fn note_in_and_out() -> rusqlite::Result<()> {
 
+        let file = "innouttest.db";
+
+        let db = Database::new(file);
+        let title = "Test title".to_string();
+        let content = "Test content".to_string();
+
+        let note = Note::new(Some(title.clone()), Some(content.clone()));
+
+        db.insert_note_to_database(&note)?;
+
+        let loaded_note = db.get_note_from_database(1)?;
+
+        assert_eq!(
+            loaded_note.title,
+            Some(title)
+        );
+        assert_eq!(
+            loaded_note.content,
+            Some(content)
+        );
+
+        fs::remove_file(file).expect("Error with deleting test database");
+        Ok(())
+    }
 }
