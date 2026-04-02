@@ -92,6 +92,11 @@ impl Database {
 
         Ok(notes)
     }
+
+    pub fn remove_note_from_database(&self, id: i32) -> rusqlite::Result<()> {
+        self.conn.execute("DELETE FROM note WHERE id = ?1", [id])?;
+        Ok(())
+    }
 }
 
 
@@ -128,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn get_all_notes() ->rusqlite::Result<()> {
+    fn get_all_notes() -> rusqlite::Result<()> {
         let file = "getallnotestest.db";
 
         let db = Database::new(file);
@@ -155,6 +160,38 @@ mod tests {
             title2,
             t2.title
         );
+
+        fs::remove_file(file).expect("Error with deleting test database");
+        Ok(())
+
+    }
+   
+    #[test]
+    pub fn remove_note() -> rusqlite::Result<()> {
+        let file = "removenotetest.db";
+
+        let db = Database::new(file);
+
+        let title = Some("Title".into());
+        let content = Some("This is content".into());
+
+        let note = Note::new(title, content);
+        
+        db.insert_note_to_database(&note)?;
+        let note1 = db.get_note_from_database(1).unwrap();
+        
+        db.remove_note_from_database(1)?;
+        let note2 = match db.get_note_from_database(1) {
+            Ok(t) => t,
+            Err(_) => {
+                fs::remove_file(file).expect("Error with deleting test database");
+                return Ok(())
+            }
+        };
+        
+        assert_ne!(note1.title, note2.title, "Note still in Database");
+        assert_ne!(note1.content, note2.content, "Note still in Database");
+
 
         fs::remove_file(file).expect("Error with deleting test database");
         Ok(())
