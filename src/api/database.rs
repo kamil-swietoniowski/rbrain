@@ -1,5 +1,5 @@
 use rusqlite::{Connection};
-use crate::api::model::Note;
+use crate::api::model::{Category, Note};
 
 
 const SCHEMA: &str = include_str!("./schema.sql");
@@ -50,7 +50,7 @@ impl Database {
         Ok(())
     }
     
-    pub fn get_note_from_database(&self, id: i32) -> rusqlite:: Result<Note> {
+    pub fn get_note_from_database(&self, id: i32) -> rusqlite::Result<Note> {
         self.conn.query_row(
             "SELECT id, title, content, modified_at, created_at FROM note WHERE id = ?1",
             [id],
@@ -99,6 +99,26 @@ impl Database {
         self.conn.execute("DELETE FROM note WHERE id = ?1", [id])?;
         Ok(())
     }
+
+    pub fn insert_category_into_database(&self, category: Category) -> rusqlite::Result<()> {
+        self.conn
+            .execute("INSERT INTO category (category_name) VALUES (?1)", [category.name])?;
+        Ok(())
+    }
+
+    pub fn get_category_from_database(&self, id: i32) -> rusqlite::Result<Category> {
+        self.conn.query_row(
+            "SELECT id, category_name FROM category WHERE id = ?1",
+            [id],
+            |row| {
+                Ok(Category {
+                    id: row.get(0)?,
+                    name: row.get(1)?
+                })
+            },
+        )
+
+    }
 }
 
 
@@ -109,7 +129,7 @@ mod tests {
 
     #[test]
     fn note_in_and_out() -> rusqlite::Result<()> {
-        let file = "innouttest.db";
+        let file = "noteinnouttest.db";
 
         let db = Database::new(file);
         let title = "Test title".to_string();
@@ -195,6 +215,28 @@ mod tests {
         assert_ne!(note1.content, note2.content, "Note still in Database");
 
 
+        fs::remove_file(file).expect("Error with deleting test database");
+        Ok(())
+
+    }
+
+    #[test]
+    pub fn category_in_and_out() -> rusqlite::Result<()> {
+        let file = "categoryinnouttest.db";
+
+        let db = Database::new(file);
+        let name = "Test title".to_string();
+
+        let categor = Category::new(name.clone());
+
+        db.insert_category_into_database(categor)?;
+
+        let loaded_cat = db.get_category_from_database(1)?;
+
+        assert_eq!(
+            loaded_cat.name,
+            name
+        );
         fs::remove_file(file).expect("Error with deleting test database");
         Ok(())
 
