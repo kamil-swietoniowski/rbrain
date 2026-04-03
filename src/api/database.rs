@@ -60,7 +60,8 @@ impl Database {
                     title: row.get(1)?,
                     content: row.get(2)?,
                     modified_at: Some(row.get(3)?),
-                    created_at: Some(row.get(4)?)
+                    created_at: Some(row.get(4)?),
+                    categories: Some(vec![])
                 })
             },
         )
@@ -81,7 +82,8 @@ impl Database {
                 title,
                 content: None,
                 created_at,
-                modified_at
+                modified_at,
+                categories: Some(vec![])
             })
         })?;
         
