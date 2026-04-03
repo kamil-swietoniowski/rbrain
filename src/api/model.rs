@@ -5,7 +5,13 @@ pub struct Note {
     pub title: Option<String>,
     pub content: Option<String>,
     pub modified_at: Option<String>,
-    pub created_at: Option<String>
+    pub created_at: Option<String>,
+    pub categories: Option<Vec<i32>>
+}
+
+pub struct Category {
+    pub id: Option<i32>,
+    pub name: String
 }
 
 impl Note {
@@ -16,7 +22,8 @@ impl Note {
             title,
             content,
             modified_at: now.clone(),
-            created_at: now
+            created_at: now,
+            categories: Some(vec![])
         }
     }
 
@@ -41,6 +48,12 @@ impl Note {
         } else {
             println!("{}\n{}", title, content);
         }
+    }
+}
+
+impl Category {
+    pub fn new(name: String) -> Self {
+        Self {id: None, name}
     }
 }
 
